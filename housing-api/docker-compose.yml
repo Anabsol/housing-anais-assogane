@@ -1,0 +1,20 @@
+version: '3.8'
+services:
+  api:
+    build: ./housing-api
+    ports:
+      - '8000:8000'
+    environment:
+      - DATABASE_URL=postgresql://postgres:514nA78.@db:5432/housing_db
+    depends_on:
+      - db
+  db:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 514nA78.
+      POSTGRES_DB: housing_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:
