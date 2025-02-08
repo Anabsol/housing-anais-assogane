@@ -5,6 +5,12 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 import pickle
 import os
+import mlflow
+import mlflow.sklearn
+
+# Initialisation de MLflow
+mlflow.set_tracking_uri("http://localhost:5000")
+mlflow.set_experiment("housing_price_prediction")
 
 # Chargement des données
 data_path = 'housing.csv'
@@ -34,7 +40,6 @@ if 'ocean_proximity' in X.columns:
 
 # Vérification des valeurs manquantes
 if X.isnull().sum().sum() > 0:
-    # Remplacement des valeurs manquantes par la moyenne
     X = X.fillna(X.mean())
 
 # Division des données en ensembles d'entraînement et de test
@@ -42,16 +47,22 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42)
 
 # Création et entraînement du modèle
-model = RandomForestRegressor(random_state=42)
-model.fit(X_train, y_train)
+with mlflow.start_run():
+    model = RandomForestRegressor(random_state=42)
+    model.fit(X_train, y_train)
 
-# Évaluation du modèle
-y_pred = model.predict(X_test)
-mse = mean_squared_error(y_test, y_pred)
-print(f"Mean Squared Error (MSE) sur l'ensemble de test : {mse:.2f}")
+    # Évaluation du modèle
+    y_pred = model.predict(X_test)
+    mse = mean_squared_error(y_test, y_pred)
+    print(f"Mean Squared Error (MSE) sur l'ensemble de test : {mse:.2f}")
 
-# Sauvegarde du modèle
-model_path = 'model.pkl'
-with open(model_path, 'wb') as f:
-    pickle.dump(model, f)
-print(f"Modèle sauvegardé dans {model_path}.")
+    # Log des paramètres, métriques et modèle dans MLflow
+    mlflow.log_param("random_state", 42)
+    mlflow.log_metric("mse", mse)
+    mlflow.sklearn.log_model(model, "model")
+
+    # Sauvegarde locale du modèle
+    model_path = 'model.pkl'
+    with open(model_path, 'wb') as f:
+        pickle.dump(model, f)
+    print(f"Modèle sauvegardé dans {model_path}.")
