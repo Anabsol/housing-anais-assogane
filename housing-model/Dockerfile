@@ -1,10 +1,9 @@
-FROM python:3.9-slim
+FROM ghcr.io/mlflow/mlflow:v2.0.1
 
-WORKDIR /app
+ENV MLFLOW_TRACKING_URI=http://mlflow:5000
+ENV BACKEND_STORE_URI=sqlite:///mlflow.db
+ENV ARTIFACT_STORE=s3://mlflow-artifacts/
 
-COPY pyproject.toml poetry.lock ./ 
-RUN pip install poetry && poetry install --no-dev
+VOLUME ./mlflow:/mlflow
 
-COPY . .
-
-CMD ["poetry", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]
+CMD mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root /mlflow --host 0.0.0.0 --port 5000
